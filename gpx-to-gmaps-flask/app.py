@@ -1,8 +1,6 @@
-import math
-from flask import Flask, render_template, request, jsonify
+import streamlit as st
 import gpxpy
-
-app = Flask(__name__)
+import math
 
 def estrai_track_points(file_stream):
     gpx = gpxpy.parse(file_stream)
@@ -31,28 +29,22 @@ def genera_link_google_maps(points):
     link = base_url + "/".join(coords_str)
     return link
 
-@app.route("/")
-def index():
-    return render_template("index.html")
+# Streamlit UI
+st.set_page_config(page_title="GPX to Google Maps", layout="centered")
 
-@app.route("/upload", methods=["POST"])
-def upload():
-    if "file" not in request.files:
-        return jsonify({"error": "Nessun file caricato"}), 400
+st.markdown("<h1 style='text-align: center;'>Carica qui il tuo file GPX</h1>", unsafe_allow_html=True)
 
-    file = request.files["file"]
-    if file.filename == "":
-        return jsonify({"error": "File senza nome"}), 400
+uploaded_file = st.file_uploader("Scegli un file GPX", type="gpx")
 
-    try:
-        points = estrai_track_points(file.stream)
-        link = genera_link_google_maps(points)
-        if link:
-            return jsonify({"link": link})
-        else:
-            return jsonify({"error": "Nessun track point trovato nel file GPX"}), 400
-    except Exception as e:
-        return jsonify({"error": f"Errore nel parsing del file: {str(e)}"}), 500
-
-if __name__ == "__main__":
-    app.run(debug=True)
+if uploaded_file is not None:
+    with st.spinner("Elaborazione del file..."):
+        try:
+            points = estrai_track_points(uploaded_file)
+            link = genera_link_google_maps(points)
+            if link:
+                st.success("Link generato con successo!")
+                st.markdown(f"<a href='{link}' target='_blank'>{link}</a>", unsafe_allow_html=True)
+            else:
+                st.error("Nessun punto trovato nel file GPX.")
+        except Exception as e:
+            st.error(f"Errore nel parsing del file GPX: {e}")
