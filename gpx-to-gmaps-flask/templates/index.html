@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GPX to Google Maps</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+    <div class="container">
+        <h1>Carica qui il tuo GPX</h1>
+        <input type="file" id="gpxfile" accept=".gpx" />
+        <button id="uploadBtn">Carica</button>
+        
+        <div id="loading" style="display:none;">Caricamento...</div>
+        
+        <div id="result" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        const uploadBtn = document.getElementById("uploadBtn");
+        const fileInput = document.getElementById("gpxfile");
+        const loading = document.getElementById("loading");
+        const result = document.getElementById("result");
+
+        uploadBtn.addEventListener("click", () => {
+            if (!fileInput.files.length) {
+                alert("Seleziona un file GPX prima di caricare.");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("file", file);
+
+            loading.style.display = "block";
+            result.innerHTML = "";
+
+            fetch("/upload", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display = "none";
+                if (data.error) {
+                    result.innerHTML = `<p style="color:red;">Errore: ${data.error}</p>`;
+                } else if (data.link) {
+                    result.innerHTML = `<p>Link Google Maps generato:</p><a href="${data.link}" target="_blank">${data.link}</a>`;
+                }
+            })
+            .catch(() => {
+                loading.style.display = "none";
+                result.innerHTML = `<p style="color:red;">Errore di rete o server.</p>`;
+            });
+        });
+    </script>
+</body>
+</html>
