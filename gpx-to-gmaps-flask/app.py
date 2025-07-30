@@ -22,8 +22,14 @@ def genera_link_google_maps(points):
     if n_points <= MAX_TAPPE:
         selected_points = points
     else:
-        step = math.ceil(n_points / MAX_TAPPE)
-        selected_points = points[::step]
+        selected_points = [points[0]]
+        n_intermedi = MAX_TAPPE - 2
+        step = (n_points - 2) / (n_intermedi + 1)
+        for i in range(1, n_intermedi + 1):
+            idx = round(i * step)
+            selected_points.append(points[idx])
+
+        selected_points.append(points[-1])
 
     coords_str = [f"{pt.latitude},{pt.longitude}" for pt in selected_points]
     link = base_url + "/".join(coords_str)
